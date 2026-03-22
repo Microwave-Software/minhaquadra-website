@@ -37,11 +37,6 @@
       "enable": true,
       "name": "Políticas",
       "url": "/politicas/"
-    },
-    {
-      "enable": true,
-      "name": "Contato",
-      "url": "/contato/"
     }
   ],
   "footerPrimary": {
