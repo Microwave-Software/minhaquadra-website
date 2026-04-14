@@ -6,6 +6,56 @@
       "source": "/sitemap.xml",
       "destination": "/sitemap-index.xml",
       "permanent": true
+    },
+    {
+      "source": "/onde-jogar-tenis-em-bh-confira-as-melhores-quadras/",
+      "destination": "/blog/melhores-quadras-de-t%C3%AAnis-em-belo-horizonte/",
+      "permanent": true
+    },
+    {
+      "source": "/onde-jogar-tenis-em-bh-confira-as-melhores-quadras",
+      "destination": "/blog/melhores-quadras-de-t%C3%AAnis-em-belo-horizonte/",
+      "permanent": true
+    },
+    {
+      "source": "/historia-do-beach-tennis/",
+      "destination": "/blog/historia-do-beach-tennis/",
+      "permanent": true
+    },
+    {
+      "source": "/historia-do-beach-tennis",
+      "destination": "/blog/historia-do-beach-tennis/",
+      "permanent": true
+    },
+    {
+      "source": "/regras-do-futebol-society-tudo-que-voce-precisa-saber/",
+      "destination": "/esportes/futebol-society/",
+      "permanent": true
+    },
+    {
+      "source": "/regras-do-futebol-society-tudo-que-voce-precisa-saber",
+      "destination": "/esportes/futebol-society/",
+      "permanent": true
+    },
+    {
+      "source": "/principais-campeonatos-de-beach-tennis-uma-visao-completa/",
+      "destination": "/blog/principais-campeonatos-de-beach-tennis/",
+      "permanent": true
+    },
+    {
+      "source": "/principais-campeonatos-de-beach-tennis-uma-visao-completa",
+      "destination": "/blog/principais-campeonatos-de-beach-tennis/",
+      "permanent": true
+    },
+    {
+      "source": "/10-melhores-quadras-de-futevolei-em-bh-2/",
+      "destination": "/blog/futevolei-em-belo-horizonte-melhores-quadras/",
+      "permanent": true
+    },
+    {
+      "source": "/10-melhores-quadras-de-futevolei-em-bh-2",
+      "destination": "/blog/futevolei-em-belo-horizonte-melhores-quadras/",
+      "permanent": true
     }
   ]
 }
