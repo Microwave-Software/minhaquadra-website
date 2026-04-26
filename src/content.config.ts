@@ -180,6 +180,29 @@ const cidadesCollection = defineCollection({
           temBlog: z.boolean().default(false),
           blogUrl: z.string().default(""),
           resumo: z.string(),
+          tituloQuadras: z.string().optional(),
+          intro: z.array(z.string()).optional(),
+          faq: z
+            .array(
+              z.object({
+                question: z.string(),
+                answer: z.string(),
+              }),
+            )
+            .optional(),
+          quadras: z
+            .array(
+              z.object({
+                nome: z.string(),
+                endereco: z.string(),
+                descricao: z.string(),
+                preco: z.string().optional(),
+                parceira: z.boolean().default(false),
+                appLink: z.string().optional(),
+                imagem: z.string().optional(),
+              }),
+            )
+            .default([]),
         }),
       )
       .default([]),
