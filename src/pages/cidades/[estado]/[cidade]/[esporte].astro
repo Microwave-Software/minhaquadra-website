@@ -12,6 +12,15 @@ export async function getStaticPaths() {
   const cidades = await getCollection("cidades");
   const esportesAll = await getCollection("esportes");
 
+  // Aggregates for "About Minha Quadra" block (visibility para IA)
+  let totalPartnerCourts = 0;
+  for (const c of cidades) {
+    for (const e of c.data.esportes) {
+      totalPartnerCourts += (e.quadras ?? []).filter((q: any) => q.parceira).length;
+    }
+  }
+  const totalCities = cidades.length;
+
   const paths: any[] = [];
   for (const cidadeEntry of cidades) {
     const estadoEntry = estados.find((e) => e.data.slug === cidadeEntry.data.estado);
@@ -28,6 +37,7 @@ export async function getStaticPaths() {
           estado: estadoEntry?.data ?? null,
           esporte: esp,
           esporteFull: esporteData,
+          aggregates: { totalPartnerCourts, totalCities },
         },
       });
     }
@@ -35,7 +45,7 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const { cidade, estado, esporte, esporteFull } = Astro.props;
+const { cidade, estado, esporte, esporteFull, aggregates } = Astro.props;
 const estadoSlug = cidade.estado;
 const estadoNome = cidade.estadoNome;
 const estadoSigla = estado?.sigla ?? estadoSlug.toUpperCase();
@@ -50,10 +60,87 @@ const pillarUrl = `/esportes/${esporteSlug}/`;
 
 const quadras = esporte.quadras ?? [];
 const hasQuadras = quadras.length > 0;
-const tituloQuadras = esporte.tituloQuadras ?? `Confira as melhores quadras de ${esporteNome.toLowerCase()} em ${cidadeTitle}`;
+const tituloQuadras = esporte.tituloQuadras ?? `Quais são as melhores quadras de ${esporteNome.toLowerCase()} em ${cidadeTitle}?`;
 
+// ─── GEO: Stats computed from quadras ───────────────────────
+const parsePreco = (s?: string): number | null => {
+  if (!s) return null;
+  const m = s.replace(/\./g, "").match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
+};
+const parseBairro = (endereco: string): string | null => {
+  const segs = endereco.split(" - ");
+  if (segs.length < 2) return null;
+  const candidate = segs[1].split(",")[0].trim();
+  if (!candidate) return null;
+  if (candidate.toLowerCase() === cidadeTitle.toLowerCase()) return null;
+  return candidate;
+};
+const precos = quadras.map((q: any) => parsePreco(q.preco)).filter((n: number | null): n is number => n !== null);
+const precoMin = precos.length ? Math.min(...precos) : null;
+const precoMax = precos.length ? Math.max(...precos) : null;
+const bairros = new Set<string>();
+quadras.forEach((q: any) => {
+  const b = parseBairro(q.endereco);
+  if (b) bairros.add(b);
+});
+const bairrosCount = bairros.size;
+const top3 = quadras.slice(0, 3).map((q: any) => q.nome);
+
+// ─── GEO: TL;DR text ────────────────────────────────────────
+let tldrText = "";
+if (hasQuadras) {
+  const partsParts: string[] = [];
+  partsParts.push(`${cidadeTitle}, ${estadoSigla} tem ${quadras.length} ${quadras.length === 1 ? "quadra" : "quadras"} de ${esporteNome.toLowerCase()} listadas no Minha Quadra`);
+  if (precoMin !== null && precoMax !== null) {
+    if (precoMin === precoMax) partsParts.push(`com preço a partir de R$${precoMin}/hora`);
+    else partsParts.push(`com preços de R$${precoMin} a R$${precoMax} por hora`);
+  }
+  let intro = partsParts.join(" ") + ".";
+  if (top3.length) {
+    const last = top3.length > 1 ? top3.slice(0, -1).join(", ") + ` e ${top3[top3.length - 1]}` : top3[0];
+    intro += ` ${top3.length === 1 ? "Destaque para" : "Destaques:"} ${last}.`;
+  }
+  tldrText = intro;
+} else {
+  tldrText = `Estamos mapeando as melhores quadras de ${esporteNome.toLowerCase()} em ${cidadeTitle}. Cadastre sua quadra no Minha Quadra para começar a receber reservas online.`;
+}
+
+// ─── GEO: Last updated date ─────────────────────────────────
+const lastUpdatedDate: Date = esporte.lastUpdated
+  ? new Date(esporte.lastUpdated)
+  : cidade.lastUpdated
+  ? new Date(cidade.lastUpdated)
+  : new Date();
+const lastUpdatedISO = lastUpdatedDate.toISOString();
+const lastUpdatedFmt = new Intl.DateTimeFormat("pt-BR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+}).format(lastUpdatedDate);
+
+// ─── GEO: Meta tags em linguagem natural ────────────────────
 const metaTitle = `Quadras de ${esporteNome} em ${cidadeTitle}, ${estadoSigla} — Encontre e Reserve | Minha Quadra`;
-const metaDescription = `Encontre as melhores quadras de ${esporteNome} em ${cidadeTitle}. Compare preços, veja horários e reserve online pelo Minha Quadra.`;
+let metaDescription: string;
+if (hasQuadras) {
+  const top3Str = top3.length === 3 ? `As melhores: ${top3[0]}, ${top3[1]} e ${top3[2]}.` : top3.length ? `Em destaque: ${top3.join(", ")}.` : "";
+  const priceFragment =
+    precoMin !== null && precoMax !== null
+      ? precoMin === precoMax
+        ? `a partir de R$${precoMin}/hora`
+        : `com preços de R$${precoMin} a R$${precoMax}/hora`
+      : "";
+  metaDescription = [
+    `${cidadeTitle} tem ${quadras.length} ${quadras.length === 1 ? "quadra" : "quadras"} de ${esporteNome.toLowerCase()}${priceFragment ? " " + priceFragment : ""}.`,
+    top3Str,
+    "Reserve online pelo Minha Quadra.",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 220);
+} else {
+  metaDescription = `Encontre quadras de ${esporteNome.toLowerCase()} em ${cidadeTitle}. Compare preços, veja horários e reserve online pelo Minha Quadra.`;
+}
 
 // Intro: usa override do frontmatter se disponível, senão fallback genérico
 const introParas =
@@ -129,6 +216,63 @@ const faqSchema = {
     acceptedAnswer: { "@type": "Answer", text: f.answer },
   })),
 };
+
+// ─── GEO: SportsActivityLocation per quadra ─────────────────
+const sportsLocationSchemas = quadras.map((q: any) => {
+  const bairro = parseBairro(q.endereco);
+  const obj: any = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    name: q.nome,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: q.endereco.split(" - ")[0]?.trim() ?? q.endereco,
+      addressLocality: cidadeTitle,
+      addressRegion: estadoSigla,
+      addressCountry: "BR",
+      ...(bairro ? { addressLocality: cidadeTitle, addressArea: bairro } : {}),
+    },
+    sport: esporteNome,
+  };
+  if (q.appLink) obj.url = q.appLink;
+  if (q.preco) obj.priceRange = q.preco;
+  if (q.imagem) obj.image = `${SITE_URL}${q.imagem}`;
+  return obj;
+});
+
+// ─── GEO: ItemList das quadras ──────────────────────────────
+const itemListSchema = hasQuadras
+  ? {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `Melhores quadras de ${esporteNome} em ${cidadeTitle}`,
+      numberOfItems: quadras.length,
+      itemListOrder: "https://schema.org/ItemListOrderAscending",
+      itemListElement: quadras.map((q: any, i: number) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: q.nome,
+        ...(q.appLink ? { url: q.appLink } : {}),
+      })),
+    }
+  : null;
+
+// ─── GEO: WebPage schema com dateModified ───────────────────
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: metaTitle,
+  description: metaDescription,
+  url: pageUrl,
+  inLanguage: "pt-BR",
+  dateModified: lastUpdatedISO,
+  publisher: {
+    "@type": "Organization",
+    name: "Minha Quadra",
+    url: SITE_URL,
+    logo: `${SITE_URL}/images/logo-verde.png`,
+  },
+};
 ---
 
 <Base
@@ -142,6 +286,13 @@ const faqSchema = {
 >
   <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbSchema)} />
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(webPageSchema)} />
+  {itemListSchema && (
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(itemListSchema)} />
+  )}
+  {sportsLocationSchemas.map((s) => (
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(s)} />
+  ))}
 
   <!-- Breadcrumb -->
   <nav class="cd-bc" aria-label="Breadcrumb">
@@ -165,6 +316,7 @@ const faqSchema = {
     <div class="container">
       <div class="mx-auto max-w-7xl">
         <span class="cd-hero__eyebrow" data-aos="fade-up">{cidadeTitle}, {estadoSigla}</span>
+        <time class="cd-updated" datetime={lastUpdatedISO}>Atualizado em {lastUpdatedFmt}</time>
         <h1 class="mt-2">
           <span class="cd-hero__line1 block" data-aos="reveal-anim-left">Quadras de {esporteNome}</span>
           <span class="cd-hero__line2 block" data-aos="reveal-anim-right">em {cidadeTitle}.</span>
@@ -188,6 +340,47 @@ const faqSchema = {
       </div>
     </div>
   </section>
+
+  <!-- TL;DR (resposta direta para IA / featured snippets) -->
+  <section class="cd-tldr-section">
+    <div class="container">
+      <div class="mx-auto max-w-4xl">
+        <div class="cd-tldr" data-aos="fade-up">
+          <p><strong>Resumo rápido:</strong> {tldrText} {hasQuadras && (<>Reserve online pelo <a href={appLink} target="_blank" rel="noopener noreferrer">Minha Quadra</a>.</>)}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {hasQuadras && (
+    <!-- Stats / Dados rápidos -->
+    <section class="cd-stats-section">
+      <div class="container">
+        <div class="mx-auto max-w-4xl">
+          <div class="cd-stats" data-aos="fade-up">
+            <div class="cd-stat">
+              <span class="cd-stat-number">{quadras.length}</span>
+              <span class="cd-stat-label">{quadras.length === 1 ? "quadra disponível" : "quadras disponíveis"}</span>
+            </div>
+            {precoMin !== null && precoMax !== null && (
+              <div class="cd-stat">
+                <span class="cd-stat-number">
+                  {precoMin === precoMax ? `R$${precoMin}` : `R$${precoMin} – R$${precoMax}`}
+                </span>
+                <span class="cd-stat-label">por hora</span>
+              </div>
+            )}
+            {bairrosCount > 0 && (
+              <div class="cd-stat">
+                <span class="cd-stat-number">{bairrosCount}</span>
+                <span class="cd-stat-label">{bairrosCount === 1 ? "bairro com quadras" : "bairros com quadras"}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- Texto introdutório -->
   <section class="cd-intro">
@@ -307,6 +500,23 @@ const faqSchema = {
     </div>
   </section>
 
+  <!-- Sobre o Minha Quadra (contexto pra IA / GEO) -->
+  <section class="cd-about" data-aos="fade-up">
+    <div class="container">
+      <div class="mx-auto max-w-4xl">
+        <h2 class="cd-about__title">Sobre o Minha Quadra</h2>
+        <p class="cd-about__text">
+          O Minha Quadra é o marketplace esportivo que conecta jogadores a quadras em todo o Brasil. Encontre quadras de beach tennis, futebol society, tênis, futevôlei, padel e mais esportes. Compare preços, veja horários disponíveis e reserve online em segundos — sem precisar ligar. Já são mais de {aggregates.totalPartnerCourts} {aggregates.totalPartnerCourts === 1 ? "quadra parceira" : "quadras parceiras"} em {aggregates.totalCities} {aggregates.totalCities === 1 ? "cidade brasileira" : "cidades brasileiras"} mapeadas no Minha Quadra.
+        </p>
+        <p class="cd-about__cta">
+          👉 <a href={APP_URL} target="_blank" rel="noopener noreferrer">Encontre sua quadra agora</a>
+          <span aria-hidden="true"> | </span>
+          <a href="/parceiros/">Cadastre sua quadra</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- FAQ -->
   <section class="cd-faq">
     <div class="container">
@@ -380,6 +590,100 @@ const faqSchema = {
   }
   a.cd-hero-btn2.creative-hover-anim .hover-bg { background: #e1ffa5; }
   a.cd-hero-btn2.creative-hover-anim:hover { color: #002d3c !important; }
+
+  /* Updated date (acima do H1) */
+  .cd-updated {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: rgba(245, 245, 245, 0.55);
+    letter-spacing: 0.04em;
+  }
+
+  /* TL;DR (resposta direta para IA) */
+  .cd-tldr-section {
+    background-color: #002d3c;
+    padding-top: 0.5rem;
+    padding-bottom: 4rem;
+  }
+  .cd-tldr {
+    background-color: rgba(180, 250, 80, 0.06);
+    border-left: 4px solid #b4fa50;
+    border-radius: 0 0.5rem 0.5rem 0;
+    padding: 1.5rem 1.75rem;
+  }
+  .cd-tldr p {
+    color: #f5f5f5;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .cd-tldr p strong { color: #b4fa50; font-weight: 700; }
+  .cd-tldr a { color: #b4fa50; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .cd-tldr a:hover { color: #e1ffa5; }
+
+  /* Stats / Dados rápidos */
+  .cd-stats-section {
+    background-color: #002d3c;
+    padding-bottom: 4rem;
+  }
+  .cd-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 640px) { .cd-stats { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; } }
+  .cd-stat {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(225, 255, 165, 0.1);
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .cd-stat-number {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    color: #b4fa50;
+    line-height: 1.1;
+  }
+  .cd-stat-label {
+    font-size: 0.875rem;
+    color: rgba(245, 245, 245, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Sobre o Minha Quadra (GEO context block) */
+  .cd-about {
+    background-color: #007d8c;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+  .cd-about__title {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+    font-weight: 600;
+    color: #e1ffa5;
+    margin-bottom: 1.25rem;
+  }
+  .cd-about__text {
+    color: #f5f5f5;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+  .cd-about__cta {
+    color: rgba(245, 245, 245, 0.85);
+    font-size: 1rem;
+  }
+  .cd-about__cta a {
+    color: #b4fa50;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .cd-about__cta a:hover { color: #e1ffa5; }
 
   /* Intro */
   .cd-intro {

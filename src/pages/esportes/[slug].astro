@@ -97,6 +97,23 @@ const breadcrumbSchema = {
   ],
 };
 
+// GEO: WebPage schema describing the pillar page (publisher context for AI engines)
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: metaTitle,
+  description: metaDescription,
+  url: `${SITE_URL}/esportes/${slug}/`,
+  inLanguage: "pt-BR",
+  about: title,
+  publisher: {
+    "@type": "Organization",
+    name: "Minha Quadra",
+    url: SITE_URL,
+    logo: `${SITE_URL}/images/logo-verde.png`,
+  },
+};
+
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -121,6 +138,7 @@ const faqSchema = {
   <!-- JSON-LD -->
   <script type="application/ld+json" is:inline set:html={JSON.stringify(breadcrumbSchema)} />
   <script type="application/ld+json" is:inline set:html={JSON.stringify(faqSchema)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(webPageSchema)} />
 
   <!-- ── SEÇÃO 1 — BREADCRUMB ─────────────────────────────────── -->
   <nav class="es-bc" aria-label="Breadcrumb">

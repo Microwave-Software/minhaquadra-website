@@ -6,6 +6,7 @@ estadoNome: "Minas Gerais"
 description: "Encontre as melhores quadras esportivas em Belo Horizonte. Beach tennis, futevôlei, tênis, society e mais esportes."
 metaTitle: "Quadras Esportivas em Belo Horizonte — Encontre e Reserve Online | Minha Quadra"
 metaDescription: "Encontre quadras esportivas em Belo Horizonte. Beach tennis, futevôlei, tênis, futebol society e mais. Compare preços e reserve online."
+lastUpdated: 2026-04-29
 esportes:
   - slug: "beach-tennis"
     nome: "Beach Tennis"
@@ -27,7 +28,8 @@ esportes:
     temBlog: false
     blogUrl: ""
     resumo: "BH tem uma enorme variedade de quadras de futebol society com grama sintética de qualidade, ideais para peladas, campeonatos e confraternizações."
-    tituloQuadras: "As 10 melhores quadras de futebol society em Belo Horizonte"
+    tituloQuadras: "Quais são as melhores quadras de futebol society em Belo Horizonte?"
+    lastUpdated: 2026-04-29
     intro:
       - "Belo Horizonte é uma das capitais com maior número de quadras de futebol society do Brasil. A modalidade, também conhecida como futebol 7, conquistou os mineiros pela praticidade: campos menores, partidas mais dinâmicas e estrutura completa para reunir os amigos."
       - "A capital mineira oferece opções para todos os gostos e bolsos — desde arenas com grama sintética padrão FIFA e iluminação LED até espaços mais acessíveis com churrasqueira e bar para o terceiro tempo. Os preços variam de R$100 a R$250 por hora."
