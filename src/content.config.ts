@@ -172,6 +172,7 @@ const cidadesCollection = defineCollection({
     description: z.string(),
     metaTitle: z.string(),
     metaDescription: z.string(),
+    lastUpdated: z.coerce.date().optional(),
     esportes: z
       .array(
         z.object({
@@ -182,6 +183,7 @@ const cidadesCollection = defineCollection({
           resumo: z.string(),
           tituloQuadras: z.string().optional(),
           intro: z.array(z.string()).optional(),
+          lastUpdated: z.coerce.date().optional(),
           faq: z
             .array(
               z.object({

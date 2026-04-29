@@ -54,6 +54,7 @@ export default defineConfig({
       filter: (page) =>
         !page.includes('/parceiros-new/') &&
         !page.includes('/minhaquadra/'),
+      lastmod: new Date(),
     }) : null,
     AutoImport({
       imports: [

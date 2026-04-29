@@ -6,13 +6,15 @@ estadoNome: "Santa Catarina"
 description: "Encontre quadras esportivas em Pinhalzinho, SC. Compare preços e reserve online pelo Minha Quadra."
 metaTitle: "Quadras Esportivas em Pinhalzinho, SC — Encontre e Reserve Online | Minha Quadra"
 metaDescription: "Encontre quadras esportivas em Pinhalzinho, Santa Catarina. Beach tennis, futevôlei e mais. Compare preços e reserve online."
+lastUpdated: 2026-04-29
 esportes:
   - slug: "beach-tennis"
     nome: "Beach Tennis"
     temBlog: false
     blogUrl: ""
     resumo: "O beach tennis está chegando com força no oeste catarinense. Pinhalzinho já conta com quadras de areia para a prática do esporte."
-    tituloQuadras: "Confira as melhores quadras de beach tennis em Pinhalzinho"
+    tituloQuadras: "Onde jogar beach tennis em Pinhalzinho?"
+    lastUpdated: 2026-04-29
     quadras:
       - nome: "Arena Pé na Areia"
         endereco: "Rua Ivo Albano Battisti, 105 - Pinhalzinho, SC"
